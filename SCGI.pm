@@ -24,10 +24,12 @@ class SCGI::Request {
             my $comma = $.request.substr($offset+$length, 1);
             return self.err("malformed netstring, expecting terminating comma, found \"$comma\"") if $comma ne ',';
             $.body = $.request.substr($offset+$length+1);
-            %.env = $env_string.split("\0");
+            my @env = $env_string.split("\0");
+            @env.pop;
+            %.env = @env;
             if $!strict {
                 return self.err("malformed or missing CONTENT_LENGTH header")\
-                unless %.env<CONTENT_LENGTH> \
+                unless defined %.env<CONTENT_LENGTH> \
                 && %.env<CONTENT_LENGTH> ~~ / ^ \d+ $ /;
                 return self.err("missing SCGI header")\
                 unless %.env<SCGI> && %.env<SCGI> eq '1';
