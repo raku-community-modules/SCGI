@@ -22,16 +22,21 @@ Oh yeah, and instead of using the while loop as shown on the Perl 5 SCGI
 documentation, there is a convenience method called 'handle' that does
 the heavy lifting for you:
 
-use SCGI;
 
-my $scgi = SCGI.new( :addr<localhost> :port(8080) );
 
-my $handler = sub (%env) {
-  my $name = %env<QUERY_STRING> // 'world';
-  my $response = "Content-Type: text/plain\n\n";
-  $response ~= "Hello $name\n";
-  return $return;
-}
+  use SCGI;
+
+  my $scgi = SCGI.new( :addr<localhost> :port(8080) );
+
+  my $handler = sub (%env) {
+    my $name = %env<QUERY_STRING> // 'world';
+    my $response = "Content-Type: text/plain\n\n";
+    $response ~= "Hello $name\n";
+    return $return;
+  }
+
+  $scgi.handle: $handler;
+
 
 
 Yeah, that's it. A simple SCGI script.
