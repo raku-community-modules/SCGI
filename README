@@ -10,9 +10,9 @@ It offers a bit of candy coating compared to the Perl 5 version.
 
 The environment contains three special keys:
 
-  Request.SCGI is a reference to the SCGI object itself.
+  Request.Body is the request body (usually from an HTTP POST.)
   Request.Object is a reference to the individual request object.
-  Request.Body is the actual request body (usually from an HTTP POST.)
+  Request.SCGI is a reference to the SCGI object itself.
 
 Also, you don't need to create your own IO::Socket::INET object.
 Just pass an 'addr' and 'port' attribute to the new() declaration and it'll
@@ -39,8 +39,10 @@ the heavy lifting for you:
 
 
 
-Yeah, that's it. A simple SCGI script.
+The output of the handler will be sent as the SCGI response, 
+so make it a valid CGI response.
 
 Author: Timothy Totten (supernovus) <2010@huri.net> http://huri.net/
 
 Released under the Artisitc License 2.0
+
