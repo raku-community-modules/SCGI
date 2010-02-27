@@ -1,2 +1,6 @@
 - Fix the library. In the January release of Rakudo, it bails out
   when you try to open a connection to the port.
+  - I may end up changing how SCGI::Request reads from the socket.
+    Reading the entire request, then parsing the components may be
+    a simpler method. We'll see.
+

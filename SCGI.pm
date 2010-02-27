@@ -61,9 +61,15 @@ class SCGI::Request {
         my %env = $env_string.split("\0");
         die "malformed or missing CONTENT_LENGTH header" unless %env<CONTENT_LENGTH> && %env<CONTENT_LENGTH> ~~ / ^ \d+ $ /;
         die "missing SCGI header" unless %env<SCGI> && %env<SCGI> eq '1';
-        my $body = $.connection.recv(%env<CONTENT_LENGTH>);
-        %env<Request.Body> = $body;
         %.env = %env;
+    }
+
+    method read_body {
+        my $body;
+        if %.env<CONTENT_LENGTH> {
+            $body = $.connection.recv(%.env<CONTENT_LENGTH>);
+        }
+        return $body;
     }
 
     submethod DESTROY {
@@ -80,6 +86,9 @@ class SCGI {
     has IO::Socket $.socket = IO::Socket::INET.socket(2, 1, 6)\
                                               .bind($!addr, $!port)\
                                               .listen();
+    has $!bodykey    = 'Request.Body';
+    has $!requestkey = 'Request.Object';
+    has $!scgikey    = 'Request.SCGI';
     
     method accept () {
         my $connection = self.socket.accept() or return;
@@ -91,9 +100,10 @@ class SCGI {
         while (my $request = self.accept) {
             $request.read_env;
             my %env = $request.env;
-            %env<Request.Object> = $request;
-            %env<Request.SCGI> = self;
-            closure(%env);
+            %env($!requestkey) = $request;
+            %env($!scgikey) = self;
+            %env($!bodykey) = $request.read_body;
+            $request.connection.send($.closure(%env));
         }
     }
 
