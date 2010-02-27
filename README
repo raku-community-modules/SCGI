@@ -1,0 +1,41 @@
+SCGI for Perl 6
+-----------------
+
+This is a simple SCGI library for Perl 6.
+
+It's main influences are the Perl 5 SCGI library, and the
+Perl 6 HTTP::Daemon library.
+
+It offers a bit of candy coating compared to the Perl 5 version.
+
+The environment contains three special keys:
+
+  Request.SCGI is a reference to the SCGI object itself.
+  Request.Object is a reference to the individual request object.
+  Request.Body is the actual request body (usually from an HTTP POST.)
+
+Also, you don't need to create your own IO::Socket::INET object.
+Just pass an 'addr' and 'port' attribute to the new() declaration and it'll
+create the object for you.
+
+Oh yeah, and instead of using the while loop as shown on the Perl 5 SCGI
+documentation, there is a convenience method called 'handle' that does
+the heavy lifting for you:
+
+use SCGI;
+
+my $scgi = SCGI.new( :addr<localhost> :port(8080) );
+
+my $handler = sub (%env) {
+  my $name = %env<QUERY_STRING> // 'world';
+  my $response = "Content-Type: text/plain\n\n";
+  $response ~= "Hello $name\n";
+  return $return;
+}
+
+
+Yeah, that's it. A simple SCGI script.
+
+Author: Timothy Totten (supernovus) <2010@huri.net> http://huri.net/
+
+Released under the Artisitc License 2.0

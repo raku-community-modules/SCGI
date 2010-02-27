@@ -1,0 +1,2 @@
+- Fix the library. In the January release of Rakudo, it bails out
+  when you try to open a connection to the port.
