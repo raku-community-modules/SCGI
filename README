@@ -42,6 +42,29 @@ the heavy lifting for you:
 The output of the handler will be sent as the SCGI response, 
 so make it a valid CGI response.
 
+** Apache configuration with mod_scgi:
+
+Add the following line to your site config, changing the details to match your
+SCGI script configuration:
+
+  SCGIMount /scgi/ 127.0.0.1:8118
+
+Then add the following lines either after the above statement, or in an
+.htaccess file in your website root:
+
+  RewriteEngine On
+
+  ## Add additional rules before the following!
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.*)$ /scgi/$1 [QSA,L,PT]
+
+That's it. Now any path that doesn't match an existing file in your
+web root, will be redirected to your SCGI script.
+
+Similar tricks are available for other web servers, but I haven't tested
+them, so have not documented them. A quick Google search for SCGI should
+turn up a multitude of howto documents.
+
 Author: Timothy Totten (supernovus) <2010@huri.net> http://huri.net/
 
 Released under the Artisitc License 2.0

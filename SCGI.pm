@@ -18,6 +18,11 @@ class SCGI::Request {
         return 0;
     }
 
+    method shutdown (:$message="Server Shutdown (by request)", :$status) {
+        self.err($message, $status);
+        exit;
+    }
+
     method parse {
         $.request = $.connection.recv();
         if $.request ~~ / ^ (\d+) \: / {
@@ -40,8 +45,7 @@ class SCGI::Request {
             return 1;
         }
         elsif $.request ~~ /:s ^ QUIT $ / {
-            self.err("Shutdown due to direct request.", "Server Shutdown");
-            exit;
+            self.shutdown(:status<Server Shutdown>);
         }
         else {
             return self.err(
@@ -90,6 +94,12 @@ class SCGI {
                 $request.close;
             }
         }
+    }
+
+    method shutdown {
+        ## Not as graceful as using the request shutdown.
+        $*ERR.say: "[{time}] Server Shutdown (direct)";
+        exit;
     }
 
 }
