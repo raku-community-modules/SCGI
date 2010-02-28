@@ -7,10 +7,13 @@ class SCGI::Request {
     has $.request is rw;
     has $!closed is rw = 0;
 
-    method err ($message) {
+    method err (
+        $message, 
+        $status = "Status: 500 SCGI Protocol Error";
+    ) {
         my $crlf = "\x0D\x0A" x 2;
         $*ERR.say: "[{time}] $message";
-        $.connection.send("Status: 500 SCGI Protocol Error$crlf");
+        $.connection.send("$status$crlf");
         self.close;
         return 0;
     }
@@ -35,6 +38,10 @@ class SCGI::Request {
                 unless %.env<SCGI> && %.env<SCGI> eq '1';
             }
             return 1;
+        }
+        elsif $.request ~~ /:s ^ QUIT $ / {
+            self.err("Shutdown due to direct request.", "Server Shutdown");
+            exit;
         }
         else {
             return self.err(
