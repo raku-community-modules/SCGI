@@ -72,9 +72,9 @@ class SCGI {
     has IO::Socket $.socket = IO::Socket::INET.socket(2, 1, 6)\
                                               .bind($!addr, $!port)\
                                               .listen();
-    has $!bodykey    = 'Request.Body';
-    has $!requestkey = 'Request.Object';
-    has $!scgikey    = 'Request.SCGI';
+    has $!bodykey    = 'SCGI.Body';
+    has $!requestkey = 'SCGI.Request';
+    has $!scgikey    = 'SCGI.Object';
 
     has $!strict = True;
     
