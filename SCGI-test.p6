@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl6
 
-#BEGIN { @*INC.push: './lib'; }
+BEGIN { @*INC.push: './lib'; }
 
 use SCGI;
 
