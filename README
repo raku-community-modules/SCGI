@@ -26,13 +26,13 @@ the heavy lifting for you:
 
   use SCGI;
 
-  my $scgi = SCGI.new( :addr<localhost> :port(8080) );
+  my $scgi = SCGI.new( :addr<localhost>, :port(8080) );
 
   my $handler = sub (%env) {
     my $name = %env<QUERY_STRING> // 'world';
     my $response = "Content-Type: text/plain\n\n";
     $response ~= "Hello $name\n";
-    return $return;
+    return $response;
   }
 
   $scgi.handle: $handler;
