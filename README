@@ -42,14 +42,32 @@ the heavy lifting for you:
 The output of the handler will be sent as the SCGI response, 
 so make it a valid CGI response.
 
-** Apache configuration with mod_scgi:
+** Apache configuration:
+
+*** If using mod_scgi:
 
 Add the following line to your site config, changing the details to match your
 SCGI script configuration:
 
   SCGIMount /scgi/ 127.0.0.1:8118
 
-Then add the following lines either after the above statement, or in an
+*** If using mod_proxy_scgi:
+
+Add the following line to your site config, changes the details to match your
+SCGI script configuration:
+
+  <Proxy *>
+    Order deny,allow
+    Allow from all
+  </Proxy>
+  ProxyPass /scgi/ scgi://localhost:8118/
+
+*** Apache redirect rules
+
+Regardless of whether you are using mod_scgi or mod_proxy_scgi, you can
+use the following steps to redirect non-exitent pages to your SCGI script.
+
+Add the following lines either after the above statement, or in an
 .htaccess file in your website root:
 
   RewriteEngine On
