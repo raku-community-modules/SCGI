@@ -30,35 +30,20 @@ class SCGI::Request {
             my $offset = ~$0.chars + 1;
             my $env_string = $.request.substr($offset, $length);
             my $comma = $.request.substr($offset+$length, 1);
-            ## Does not work in Rakudo new master.
-            #return self.err("malformed netstring, expecting terminating comma, found \"$comma\"") if $comma ne ',';
-            ## Begin replacement.
             if $comma ne ',' {
                 return self.err("malformed netstring, expecting terminating comma, found \"$comma\"");
             }
-            ## End replacement.
             $.body = $.request.substr($offset+$length+1);
             my @env = $env_string.split("\0");
             @env.pop;
             %.env = @env;
             if $!strict {
-                ## Does not work in Rakudo new master.
-                #return self.err("malformed or missing CONTENT_LENGTH header")\
-                #unless defined %.env<CONTENT_LENGTH> \
-                #&& %.env<CONTENT_LENGTH> ~~ / ^ \d+ $ /;
-                ## Begin replacement.
                 unless defined %.env<CONTENT_LENGTH> && %.env<CONTENT_LENGTH> ~~ / ^ \d+ $ / {
                     return self.err("malformed or missing CONTENT_LENGTH header");
                 }
-                ## End replacement.
-                ## Does not work in Rakudo new master.
-                #return self.err("missing SCGI header")\
-                #unless %.env<SCGI> && %.env<SCGI> eq '1';
-                ## Begin replacement.
                 unless %.env<SCGI> && %.env<SCGI> eq '1' {
                     return self.err: "missing SCGI header";
                 }
-                ## End replacement.
             }
             return 1;
         }
@@ -87,12 +72,7 @@ class SCGI {
 
     has Int $!port = 8080;
     has Str $!addr = 'localhost';
-    ## The following doesn't work on Rakudo new master.
-    #has IO::Socket 
-    ## Removing the IO::Socket part allows it to compile.
-    has $.socket = IO::Socket::INET.socket(2, 1, 6)\
-                                              .bind($!addr, $!port)\
-                                              .listen();
+    has $.socket = IO::Socket::INET.new(:localhost($!addr), :localport($!port), :listen);
 
     has $!bodykey    = 'SCGI.Body';
     has $!requestkey = 'SCGI.Request';
