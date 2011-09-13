@@ -84,14 +84,18 @@ class SCGI {
     has $.strict = True;
     
     method accept () {
+        $*ERR.say: "Waiting for connection.";
         my $connection = self.socket.accept() or return;
+        $*ERR.say: "connection family is "~$connection.family;
+        $*ERR.say: "connection proto is "~$connection.proto;
+        $*ERR.say: "connection type is "~$connection.type;
         SCGI::Request.new( :connection($connection), :strict($.strict) );
     }
 
     method handle (&closure) {
-        #$*ERR.say: "family is "~$.socket.family;
-        #$*ERR.say: "proto is "~$.socket.proto;
-        #$*ERR.say: "type is "~$.socket.type;
+        $*ERR.say: "socket family is "~$.socket.family;
+        $*ERR.say: "socket proto is "~$.socket.proto;
+        $*ERR.say: "socket type is "~$.socket.type;
         while (my $request = self.accept) {
             $*ERR.say: "Doing the loop";
             if $request.parse {
