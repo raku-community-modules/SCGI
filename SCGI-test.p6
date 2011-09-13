@@ -4,7 +4,7 @@ BEGIN { @*INC.push: './lib'; }
 
 use SCGI;
 
-my $scgi = SCGI.new( :port(8118), :strict );
+my $scgi = SCGI.new( :port(8118), :!strict );
 
 my $handler = sub (%env) {
     my $name = %env<QUERY_STRING> || 'World';

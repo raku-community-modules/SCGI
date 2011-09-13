@@ -1,6 +1,7 @@
+class SCGI { ... }
 class SCGI::Request {
 
-    has $!strict = True;
+    has $.strict = True;
     has $.connection;
     has %.env is rw;
     has $.body is rw;
@@ -24,10 +25,12 @@ class SCGI::Request {
     }
 
     method parse {
-        $.request = $.connection.recv();
+        $.request = $.connection.get();#recv();
+        $*ERR.say: "Receieved request: $.request";
         if $.request ~~ / ^ (\d+) \: / {
+            $*ERR.say: "A proper request was received, parsing into an ENV";
             my $length = +$0;
-            my $offset = ~$0.chars + 1;
+            my $offset = $0.Str.chars + 1;
             my $env_string = $.request.substr($offset, $length);
             my $comma = $.request.substr($offset+$length, 1);
             if $comma ne ',' {
@@ -37,7 +40,7 @@ class SCGI::Request {
             my @env = $env_string.split("\0");
             @env.pop;
             %.env = @env;
-            if $!strict {
+            if $.strict {
                 unless defined %.env<CONTENT_LENGTH> && %.env<CONTENT_LENGTH> ~~ / ^ \d+ $ / {
                     return self.err("malformed or missing CONTENT_LENGTH header");
                 }
@@ -70,28 +73,32 @@ class SCGI::Request {
 
 class SCGI {
 
-    has Int $!port = 8080;
-    has Str $!addr = 'localhost';
-    has $.socket = IO::Socket::INET.new(:localhost($!addr), :localport($!port), :listen);
+    has Int $.port = 8080;
+    has Str $.addr = 'localhost';
+    has $.socket = IO::Socket::INET.new(:localhost($.addr), :localport($.port), :listen(1));
 
-    has $!bodykey    = 'SCGI.Body';
-    has $!requestkey = 'SCGI.Request';
-    has $!scgikey    = 'SCGI.Object';
+    has $.bodykey    = 'SCGI.Body';
+    has $.requestkey = 'SCGI.Request';
+    has $.scgikey    = 'SCGI.Object';
 
-    has $!strict = True;
+    has $.strict = True;
     
     method accept () {
         my $connection = self.socket.accept() or return;
-        SCGI::Request.new( :connection($connection), :strict($!strict) );
+        SCGI::Request.new( :connection($connection), :strict($.strict) );
     }
 
     method handle (&closure) {
+        #$*ERR.say: "family is "~$.socket.family;
+        #$*ERR.say: "proto is "~$.socket.proto;
+        #$*ERR.say: "type is "~$.socket.type;
         while (my $request = self.accept) {
+            $*ERR.say: "Doing the loop";
             if $request.parse {
                 my %env = $request.env;
-                %env{$!requestkey} = $request;
-                %env{$!scgikey} = self;
-                %env{$!bodykey} = $request.body; 
+                %env{$.requestkey} = $request;
+                %env{$.scgikey} = self;
+                %env{$.bodykey} = $request.body; 
                 $request.connection.send(closure(%env));
                 $request.close;
             }
