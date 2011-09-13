@@ -7,6 +7,7 @@ class SCGI::Request {
     has $.body is rw;
     has $.request is rw;
     has $!closed is rw = 0;
+    has $.debug = False; 
 
     method err (
         $message, 
@@ -26,9 +27,11 @@ class SCGI::Request {
 
     method parse {
         $.request = $.connection.get();#recv();
-        $*ERR.say: "Receieved request: $.request";
+        if $.debug { $*ERR.say: "Receieved request: $.request"; }
         if $.request ~~ / ^ (\d+) \: / {
-            $*ERR.say: "A proper request was received, parsing into an ENV";
+            if $.debug {
+              $*ERR.say: "A proper request was received, parsing into an ENV";
+            }
             my $length = +$0;
             my $offset = $0.Str.chars + 1;
             my $env_string = $.request.substr($offset, $length);
@@ -81,29 +84,64 @@ class SCGI {
     has $.requestkey = 'SCGI.Request';
     has $.scgikey    = 'SCGI.Object';
 
+    has $.PSGI = False; ## Set to true to use PSGI mode.
+
+    has $.debug = False; ## Set to true to debug stuff.
+
     has $.strict = True;
     
     method accept () {
-        $*ERR.say: "Waiting for connection.";
+        if ($.debug) {
+          $*ERR.say: "Waiting for connection.";
+        }
         my $connection = self.socket.accept() or return;
-        $*ERR.say: "connection family is "~$connection.family;
-        $*ERR.say: "connection proto is "~$connection.proto;
-        $*ERR.say: "connection type is "~$connection.type;
-        SCGI::Request.new( :connection($connection), :strict($.strict) );
+        if ($.debug) {
+          $*ERR.say: "connection family is "~$connection.family;
+          $*ERR.say: "connection proto is "~$connection.proto;
+          $*ERR.say: "connection type is "~$connection.type;
+        }
+        SCGI::Request.new( :connection($connection), :$.strict, :$.debug );
     }
 
     method handle (&closure) {
-        $*ERR.say: "socket family is "~$.socket.family;
-        $*ERR.say: "socket proto is "~$.socket.proto;
-        $*ERR.say: "socket type is "~$.socket.type;
+        if ($.debug) {
+          $*ERR.say: "socket family is "~$.socket.family;
+          $*ERR.say: "socket proto is "~$.socket.proto;
+          $*ERR.say: "socket type is "~$.socket.type;
+        }
+        $*ERR.say: "[{time}] SCGI is ready and waiting.";
         while (my $request = self.accept) {
-            $*ERR.say: "Doing the loop";
+            if ($.debug) { $*ERR.say: "Doing the loop"; }
             if $request.parse {
                 my %env = $request.env;
                 %env{$.requestkey} = $request;
                 %env{$.scgikey} = self;
-                %env{$.bodykey} = $request.body; 
-                $request.connection.send(closure(%env));
+                %env{$.bodykey} = $request.body;
+                if ($.PSGI)
+                {
+                  %env<psgi.version>      = [1,0];
+                  %env<psgi.url_scheme>   = 'http';  ## FIXME: detect this.
+                  %env<psgi.multithread>  = False;
+                  %env<psgi.multiprocess> = False;
+                  %env<psgi.input>        = $request.body; ## ??
+                  %env<psgi.errors>       = $*ERR;   ## Allow override?
+                  %env<psgi.run_once>     = False;
+                  %env<psgi.nonblocking>  = False;   ## Allow when NBIO.
+                  %env<psgi.streaming>    = False;   ## Eventually?
+                }
+                my $return = closure(%env);
+                my $output;
+                if ($.PSGI)
+                { 
+                  my $headers = "Status: "~$return[0]~"\n";
+                  for @($return[1]) -> $header {
+                    $headers ~= $header.key ~ ": " ~ $header.value ~ "\n";
+                  }
+                  my $body = $return[2].join("\n");
+                  $output = "$headers\n$body";
+                }
+                else { $output = $return; }
+                $request.connection.send($output);
                 $request.close;
             }
         }
