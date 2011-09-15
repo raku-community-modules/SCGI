@@ -80,15 +80,21 @@ class SCGI {
     has Str $.addr = 'localhost';
     has $.socket = IO::Socket::INET.new(:localhost($.addr), :localport($.port), :listen(1));
 
+    ## Don't override these unless you really know what you are doing.
+    ## All of my libraries expect the defaults to have been used.
     has $.bodykey    = 'SCGI.Body';
     has $.requestkey = 'SCGI.Request';
     has $.scgikey    = 'SCGI.Object';
 
-    has $.PSGI = False; ## Set to true to use PSGI mode.
+    has $.errors = $*ERR; ## Default error stream.
 
-    has $.debug = False; ## Set to true to debug stuff.
+    has $.PSGI = False;   ## Set to true to use PSGI mode.
+    has $.NPH  = False;   ## Set to true to use NPH mode.
 
-    has $.strict = True;
+    has $.debug  = False; ## Set to true to debug stuff.
+    has $.strict = True;  ## If set to false, don't ensure proper SCGI.
+
+    has $.crlf = "\x0D\x0A";
     
     method accept () {
         if ($.debug) {
@@ -123,8 +129,8 @@ class SCGI {
                   %env<psgi.url_scheme>   = 'http';  ## FIXME: detect this.
                   %env<psgi.multithread>  = False;
                   %env<psgi.multiprocess> = False;
-                  %env<psgi.input>        = $request.body; ## ??
-                  %env<psgi.errors>       = $*ERR;   ## Allow override?
+                  %env<psgi.input>        = $request.body; ## Is this valid?
+                  %env<psgi.errors>       = $.errors;
                   %env<psgi.run_once>     = False;
                   %env<psgi.nonblocking>  = False;   ## Allow when NBIO.
                   %env<psgi.streaming>    = False;   ## Eventually?
@@ -133,14 +139,29 @@ class SCGI {
                 my $output;
                 if ($.PSGI)
                 { 
-                  my $headers = "Status: "~$return[0]~"\n";
-                  for @($return[1]) -> $header {
-                    $headers ~= $header.key ~ ": " ~ $header.value ~ "\n";
+                  my $headers;
+                  if ($.NPH) {
+                    $headers = "HTTP 1.1 "~$return[0]~$.crlf;
                   }
-                  my $body = $return[2].join("\n");
-                  $output = "$headers\n$body";
+                  else {
+                    $headers = "Status: "~$return[0]~$.crlf;
+                  }
+                  for @($return[1]) -> $header {
+                    $headers ~= $header.key ~ ": " ~ $header.value ~ $.crlf;
+                  }
+                  my $body = $return[2].join($.crlf);
+                  $output = $headers~$.crlf~$body;
                 }
-                else { $output = $return; }
+                else {
+                  if ($.NPH && $return !~~ /^HTTP/) {
+                    $return ~~ s:g/^ Status: \s* (\d+) \s* \w* $//;
+                    my $status = $0;
+                    $output = "HTTP/1.1 $status"~$.crlf~$return;
+                  }
+                  else {
+                    $output = $return; 
+                  }
+                }
                 $request.connection.send($output);
                 $request.close;
             }
