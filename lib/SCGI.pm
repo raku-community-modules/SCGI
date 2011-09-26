@@ -26,7 +26,8 @@ class SCGI::Request {
     }
 
     method parse {
-        $.request = $.connection.get();#recv();
+        $.request = $.connection.get();#recv(); ## FIXME!
+        my $rlen = $.request.chars;
         if $.debug { $*ERR.say: "Receieved request: $.request"; }
         if $.request ~~ / ^ (\d+) \: / {
             if $.debug {
@@ -34,6 +35,9 @@ class SCGI::Request {
             }
             my $length = +$0;
             my $offset = $0.Str.chars + 1;
+            if ($rlen < $length + $offset) {
+              return self.err("malformed netstring, length is incorrect.");
+            }
             my $env_string = $.request.substr($offset, $length);
             my $comma = $.request.substr($offset+$length, 1);
             if $comma ne ',' {
