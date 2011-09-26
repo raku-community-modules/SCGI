@@ -26,7 +26,7 @@ class SCGI::Request {
     }
 
     method parse {
-        $.request = $.connection.get();#recv(); ## FIXME!
+        $.request = $.connection.recv();
         my $rlen = $.request.chars;
         if $.debug { $*ERR.say: "Receieved request: $.request"; }
         if $.request ~~ / ^ (\d+) \: / {
