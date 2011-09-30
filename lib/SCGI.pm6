@@ -8,13 +8,14 @@ class SCGI::Request {
     has $.request is rw;
     has $!closed is rw = 0;
     has $.debug = False; 
+    has $.errors = $*ERR;
 
     method err (
         $message, 
         $status = "Status: 500 SCGI Protocol Error";
     ) {
         my $crlf = "\x0D\x0A" x 2;
-        $*ERR.say: "[{time}] $message";
+        $.errors.say: "[{time}] $message";
         $.connection.send("$status$crlf");
         self.close;
         return 0;
@@ -28,10 +29,10 @@ class SCGI::Request {
     method parse {
         $.request = $.connection.recv();
         my $rlen = $.request.chars;
-        if $.debug { $*ERR.say: "Receieved request: $.request"; }
+        if $.debug { $.errors.say: "Receieved request: $.request"; }
         if $.request ~~ / ^ (\d+) \: / {
             if $.debug {
-              $*ERR.say: "A proper request was received, parsing into an ENV";
+              $.errors.say: "A proper request was received, parsing into an ENV";
             }
             my $length = +$0;
             my $offset = $0.Str.chars + 1;
@@ -80,15 +81,18 @@ class SCGI::Request {
 
 class SCGI {
 
+    use HTTP::Status;
+
     has Int $.port = 8080;
     has Str $.addr = 'localhost';
     has $.socket = IO::Socket::INET.new(:localhost($.addr), :localport($.port), :listen(1));
 
     ## Don't override these unless you really know what you are doing.
     ## All of my libraries expect the defaults to have been used.
-    has $.bodykey    = 'SCGI.Body';
-    has $.requestkey = 'SCGI.Request';
-    has $.scgikey    = 'SCGI.Object';
+    has $.bodykey    = 'SCGI.Body';    ## The body of the request.
+    has $.requestkey = 'SCGI.Request'; ## The Request Object itself.
+    has $.scgikey    = 'SCGI.Object';  ## The SCGI Object itself.
+    has $.errkey     = 'SCGI.Errors';  ## The Error Stream.
 
     has $.errors = $*ERR; ## Default error stream.
 
@@ -98,35 +102,38 @@ class SCGI {
     has $.debug  = False; ## Set to true to debug stuff.
     has $.strict = True;  ## If set to false, don't ensure proper SCGI.
 
-    has $.crlf = "\x0D\x0A";
+    constant $CRLF = "\x0D\x0A";
     
     method accept () {
         if ($.debug) {
-          $*ERR.say: "Waiting for connection.";
+          $.errors.say: "Waiting for connection.";
         }
         my $connection = self.socket.accept() or return;
         if ($.debug) {
-          $*ERR.say: "connection family is "~$connection.family;
-          $*ERR.say: "connection proto is "~$connection.proto;
-          $*ERR.say: "connection type is "~$connection.type;
+          $.errors.say: "connection family is "~$connection.family;
+          $.errors.say: "connection proto is "~$connection.proto;
+          $.errors.say: "connection type is "~$connection.type;
         }
-        SCGI::Request.new( :connection($connection), :$.strict, :$.debug );
+        SCGI::Request.new( 
+          :connection($connection), :$.strict, :$.debug, :$.errors 
+        );
     }
 
     method handle (&closure) {
         if ($.debug) {
-          $*ERR.say: "socket family is "~$.socket.family;
-          $*ERR.say: "socket proto is "~$.socket.proto;
-          $*ERR.say: "socket type is "~$.socket.type;
+          $.errors.say: "socket family is "~$.socket.family;
+          $.errors.say: "socket proto is "~$.socket.proto;
+          $.errors.say: "socket type is "~$.socket.type;
         }
-        $*ERR.say: "[{time}] SCGI is ready and waiting.";
+        $.errors.say: "[{time}] SCGI is ready and waiting.";
         while (my $request = self.accept) {
-            if ($.debug) { $*ERR.say: "Doing the loop"; }
+            if ($.debug) { $.errors.say: "Doing the loop"; }
             if $request.parse {
                 my %env = $request.env;
                 %env{$.requestkey} = $request;
                 %env{$.scgikey} = self;
                 %env{$.bodykey} = $request.body;
+                %env{$.errkey}  = $.errors;
                 if ($.PSGI)
                 {
                   %env<psgi.version>      = [1,0];
@@ -144,23 +151,32 @@ class SCGI {
                 if ($.PSGI)
                 { 
                   my $headers;
+                  my $code = $return[0];
+                  my $message = get_http_status_msg($code);
                   if ($.NPH) {
-                    $headers = "HTTP 1.1 "~$return[0]~$.crlf;
+                    $headers = "HTTP/1.1 $code $message"~$CRLF;
                   }
                   else {
-                    $headers = "Status: "~$return[0]~$.crlf;
+                    $headers = "Status: $code $message"~$CRLF;
                   }
                   for @($return[1]) -> $header {
-                    $headers ~= $header.key ~ ": " ~ $header.value ~ $.crlf;
+                    $headers ~= $header.key ~ ": " ~ $header.value ~ $CRLF;
                   }
-                  my $body = $return[2].join($.crlf);
-                  $output = $headers~$.crlf~$body;
+                  my $body = $return[2].join($CRLF);
+                  $output = $headers~$CRLF~$body;
                 }
                 else {
                   if ($.NPH && $return !~~ /^HTTP/) {
-                    $return ~~ s:g/^ Status: \s* (\d+) \s* \w* $//;
-                    my $status = $0;
-                    $output = "HTTP/1.1 $status"~$.crlf~$return;
+                    $return ~~ s:g/^ Status: \s* (\d+) \s* (\w)* $//;
+                    my $code = +$0;
+                    my $message;
+                    if ($1) {
+                      $message = ~$1;
+                    }
+                    else {
+                      $message = get_http_status_msg($code);
+                    }
+                    $output = "HTTP/1.1 $code $message"~$CRLF~$return;
                   }
                   else {
                     $output = $return; 

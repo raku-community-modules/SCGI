@@ -87,6 +87,11 @@ Similar tricks are available for other web servers, but I haven't tested
 them, so have not documented them. A quick Google search for SCGI should
 turn up a multitude of howto documents.
 
+** Requirements:
+
+ * Rakudo Perl 6  <http://rakudo.org/>
+ * HTTP::Status   <http://github.com/supernovus/perl6-http-status/>
+
 Author: Timothy Totten (supernovus) <2010@huri.net> http://huri.net/
 
 Released under the Artisitc License 2.0
