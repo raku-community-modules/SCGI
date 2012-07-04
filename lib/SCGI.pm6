@@ -12,7 +12,7 @@ class SCGI::Request {
 
     method err (
         $message, 
-        $status = "Status: 500 SCGI Protocol Error";
+        $status = "Status: 500 SCGI Protocol Error"
     ) {
         my $crlf = "\x0D\x0A" x 2;
         $.errors.say: "[{time}] $message";
@@ -69,12 +69,12 @@ class SCGI::Request {
     }
 
     method close () {
-        $.connection.close if $.connection;
+        $!connection.close if $!connection;
         $!closed = 1;
     }
 
     submethod DESTROY {
-        self.close unless $.closed;
+        self.close unless self.closed;
     }
 
 }
@@ -85,7 +85,7 @@ class SCGI {
 
     has Int $.port = 8080;
     has Str $.addr = 'localhost';
-    has $.socket = IO::Socket::INET.new(:localhost($.addr), :localport($.port), :listen(1));
+    has $.socket = IO::Socket::INET.new(:localhost($!addr), :localport($!port), :listen(1));
 
     ## Don't override these unless you really know what you are doing.
     ## All of my libraries expect the defaults to have been used.
