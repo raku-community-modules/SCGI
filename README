@@ -3,6 +3,28 @@ SCGI for Perl 6
 
 This is a simple SCGI library for Perl 6.
 
+===============================================================================
+
+NOTE: 
+
+   SCGI version 2.0 is coming soon. It will be refactored to use a class
+   structure similar to my new FastCGI library, and will break compatibility
+   with 1.0 in the following ways:
+
+     1.) PSGI mode will be on by default (use of Raw mode is discouraged.)
+     2.) 'SCGI.Body' and 'SCGI.SCGI' are gone.
+     3.) 'SCGI.Object' is renamed 'scgi.request'.
+     4.) Request object has access to connection and SCGI objects.
+  
+   All in all, it will be more flexible, and easier to use, but any libraries
+   and projects using it will have to be updated to take the above changes
+   into account. Hopefully everyone is already using PSGI, and nobody is
+   using the SCGI.* variables directly.
+
+   The rest of this README applies to the current 1.0 version.
+
+===============================================================================
+
 It's main influences are the Perl 5 SCGI library, and the
 Perl 6 HTTP::Daemon library.
 

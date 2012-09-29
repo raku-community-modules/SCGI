@@ -1,3 +1,0 @@
-- Include some more examples, like a wrapper that logs the STDOUT and STDERR
-  to log files, as it is not passed through the socket.
-
