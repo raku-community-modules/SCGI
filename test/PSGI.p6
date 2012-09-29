@@ -1,10 +1,8 @@
 #!/usr/bin/env perl6
 
-BEGIN { @*INC.push: './lib'; }
-
 use SCGI;
 
-my $scgi = SCGI.new( :port(8118), :!strict, :PSGI, :debug );
+my $scgi = SCGI.new( :port(8118) );
 
 my $handler = sub (%env) {
     my $name = %env<QUERY_STRING> || 'World';
