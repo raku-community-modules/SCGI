@@ -25,7 +25,7 @@ method send ($response-data)
     {
       $headers ~= $header.key ~ ": " ~ $header.value ~ CRLF;
     }
-    my $body = $response-data[2].join(CRLF);
+    my $body = $response-data[2].join;
     $http_message = $headers~CRLF~$body;
   }
   else 
