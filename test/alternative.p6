@@ -16,7 +16,10 @@ while (my $connection = $scgi.accept())
   if $request.success
   {
     my $name = $request.env<QUERY_STRING> || 'World';
-    $connection.send("Content-type: text/plain\n\nHello $name\n");
+    my $return = "Hello $name\n";
+    my $len = $return.encode.bytes;
+    my $headers = "Content-Type: text/plain\nContent-Length: $len\n";
+    $connection.send("$headers\n$return");
   }
   $connection.close;
 }

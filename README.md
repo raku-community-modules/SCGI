@@ -32,7 +32,8 @@ with PSGI-compliant output. Here's an example:
     my $status = '200';
     my @headers = 'Content-Type' => 'text/plain';
     my @body = "Hello $name\n";
-    return [ $status, @headers, @body ];
+    @headers.push: 'Content-Length' => @body.join.encode.bytes;
+    return [ $status, \@headers, \@body ];
   }
 
   $scgi.handle: $handler;
@@ -51,13 +52,20 @@ or using a raw HTTP output instead of PSGI. Here's an example doing both:
     if $request.success
     {
       my $name = $request.env<QUERY_STRING> || 'world';
-      $connection.send("Content-type: text/plain\n\nHello $name\n");
+      my $return = "Hello $name\n";
+      my $len = $return.encode.bytes;
+      my $headers = "Content-Type: text/plain\nContent-Length: $len\n";
+      $connection.send("$headers\n$return");
     }
     $connection.close;
   }
 ```
 
 Test script representing both examples can be found in the 'test' folder.
+
+If you are serious about using SCGI for web application development, see
+[WWW::App](https://github.com/supernovus/perl6-www-app/) which makes building
+web apps MUCH easier!
 
 ## Configuration
 
