@@ -10,9 +10,19 @@ has $.request;
 
 method parse ()
 {
-  $!request = $.connection.socket.recv();
-  my $rlen = $.request.chars;
   my $debug = $.connection.parent.debug;
+  my $received = False;
+  ## The while loop with read() doesn't work, using a bytes test instead.
+  #while my $chunk = $.connection.socket.read(256)
+  while ! $received
+  {
+    my $chunk = $.connection.socket.read(256);
+    my $bytes = $chunk.bytes;
+    $*ERR.say: "Read $bytes of data." if $debug;
+    if $bytes != 256 { $received = True; }
+    $!request ~= $chunk.decode;
+  }
+  my $rlen = $.request.chars;
   my $err = $.connection.err;
   if $debug { $*ERR.say: "Receieved request: $.request"; }
   if $.request ~~ / ^ (\d+) \: / 
@@ -25,7 +35,7 @@ method parse ()
     my $offset = $0.Str.chars + 1;
     if ($rlen < $length + $offset) 
     {
-      $err.say(SCGI_E_LENGTH);
+      $err.say(SCGI_E_LENGTH ~ " [$rlen/$length+$offset]");
       return self;
     }
     my $env_string = $.request.substr($offset, $length);
