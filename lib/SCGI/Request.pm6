@@ -1,5 +1,6 @@
 class SCGI::Request;
 
+use Netstring;
 use SCGI::Constants;
 
 has $.connection;
@@ -11,84 +12,53 @@ has $.request;
 method parse ()
 {
   my $debug = $.connection.parent.debug;
-  my $received = False;
-  ## The while loop with read() doesn't work, using a bytes test instead.
-  #while my $chunk = $.connection.socket.read(256)
-  while ! $received
-  {
-    my $chunk = $.connection.socket.read(256);
-    my $bytes = $chunk.bytes;
-    $*ERR.say: "Read $bytes of data." if $debug;
-    if $bytes != 256 { $received = True; }
-    $!request ~= $chunk.decode;
-  }
+
+  my $netstring = read-netstring($.connection.socket);
+  $!request = $netstring.decode;
+
   my $rlen = $.request.chars;
   my $err = $.connection.err;
   if $debug { $*ERR.say: "Receieved request: $.request"; }
-  if $.request ~~ / ^ (\d+) \: / 
+  my @env = $.request.split(SEP);
+  @env.pop;
+  %!env = @env;
+
+  if $.connection.parent.strict 
   {
-    if $debug 
+    unless defined %.env<CONTENT_LENGTH> 
+    && %.env<CONTENT_LENGTH> ~~ / ^ \d+ $ / 
     {
-      $*ERR.say: "A proper request was received, parsing into an ENV";
-    }
-    my $length = +$0;
-    my $offset = $0.Str.chars + 1;
-    if ($rlen < $length + $offset) 
-    {
-      $err.say(SCGI_E_LENGTH ~ " [$rlen/$length+$offset]");
+      $err.say(SCGI_E_CONTENT);
       return self;
     }
-    my $env_string = $.request.substr($offset, $length);
-    my $comma = $.request.substr($offset+$length, 1);
-    if $comma ne ',' 
+    unless %.env<SCGI> && %.env<SCGI> eq '1' 
     {
-      $err.sayf(SCGI_E_COMMA, $comma);
+      $err.say(SCGI_E_SCGI);
       return self;
     }
-    $!input = $.request.substr($offset+$length+1);
-    my @env = $env_string.split(SEP);
-    @env.pop;
-    %!env = @env;
-    if $.connection.parent.strict 
-    {
-      unless defined %.env<CONTENT_LENGTH> 
-      && %.env<CONTENT_LENGTH> ~~ / ^ \d+ $ / 
-      {
-        $err.say(SCGI_E_CONTENT);
-        return self;
-      }
-      unless %.env<SCGI> && %.env<SCGI> eq '1' 
-      {
-        $err.say(SCGI_E_SCGI);
-        return self;
-      }
-    }
+  }
 
-    %.env<scgi.request> = self;
-    if $.connection.parent.PSGI
-    {
-      %.env<psgi.version>      = [1,0];
-      %.env<psgi.url_scheme>   = 'http';  ## FIXME: detect this.
-      %.env<psgi.multithread>  = False;
-      %.env<psgi.multiprocess> = False;
-      %.env<psgi.input>        = $.input;
-      %.env<psgi.errors>       = $.connection.err;
-      %.env<psgi.run_once>     = False;
-      %.env<psgi.nonblocking>  = False;   ## Allow when NBIO.
-      %.env<psgi.streaming>    = False;   ## Eventually?
-    }
+  my $clen = +%.env<CONTENT_LENGTH>;
+  if $clen > 0
+  {
+    $!input = $.connection.socket.read($clen);
+  }
 
-    $!success = True;
-    return self;
-  }
-  elsif $.request ~~ /:s ^ QUIT $ / 
+  %.env<scgi.request> = self;
+  if $.connection.parent.PSGI
   {
-    $.connection.shutdown(SCGI_M_QUIT);
+    %.env<psgi.version>      = [1,0];
+    %.env<psgi.url_scheme>   = 'http';  ## FIXME: detect this.
+    %.env<psgi.multithread>  = False;
+    %.env<psgi.multiprocess> = False;
+    %.env<psgi.input>        = $.input;
+    %.env<psgi.errors>       = $.connection.err;
+    %.env<psgi.run_once>     = False;
+    %.env<psgi.nonblocking>  = False;   ## Allow when NBIO.
+    %.env<psgi.streaming>    = False;   ## Eventually?
   }
-  else 
-  {
-    $err.sayf(SCGI_E_INVALID, $.request);
-    return self;
-  }
+
+  $!success = True;
+  return self;
 }
 

@@ -2,6 +2,6 @@
   "name"        : "SCGI",
   "version"     : "*",
   "description" : "A SCGI library for Perl 6",
-  "depends"     : [ "HTTP::Status" ],
+  "depends"     : [ "HTTP::Status", "Netstring" ],
   "source-url"  : "git://github.com/supernovus/SCGI.git"
 }

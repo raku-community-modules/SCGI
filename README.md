@@ -114,8 +114,8 @@ SCGI script configuration:
 
 ## Requirements
 
- * HTTP::Status
-   http://github.com/supernovus/perl6-http-status
+ * [HTTP::Status](https://github.com/supernovus/perl6-http-status)
+ * [Netstring](https://github.com/supernovus/perl6-netstring)
 
 ## Author 
 
