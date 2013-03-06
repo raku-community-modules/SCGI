@@ -64,8 +64,8 @@ or using a raw HTTP output instead of PSGI. Here's an example doing both:
 Test script representing both examples can be found in the 'test' folder.
 
 If you are serious about using SCGI for web application development, see
-[WWW::App](https://github.com/supernovus/perl6-www-app/) which makes building
-web apps MUCH easier!
+the [Perl 6 Web](https://github.com/supernovus/perl6-web/) library set, 
+or one of the full blown frameworks built using it.
 
 ## Configuration
 
