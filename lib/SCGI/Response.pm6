@@ -2,6 +2,7 @@ class SCGI::Response;
 
 use HTTP::Status;
 use SCGI::Constants;
+use PSGI;
 
 has $.connection;
 
@@ -10,23 +11,8 @@ method send ($response-data)
   my $http_message;
   if $.connection.parent.PSGI
   {
-    my $headers;
-    my $code = $response-data[0];
-    my $message = get_http_status_msg($code);
-    if $.connection.parent.NPH 
-    {
-      $headers = "HTTP/1.1 $code $message"~CRLF;
-    }
-    else 
-    {
-      $headers = "Status: $code $message"~CRLF;
-    }
-    for @($response-data[1]) -> $header 
-    {
-      $headers ~= $header.key ~ ": " ~ $header.value ~ CRLF;
-    }
-    my $body = $response-data[2].join;
-    $http_message = $headers~CRLF~$body;
+    my $nph = $.connection.parent.NPH;
+    $http_message = encode-psgi-response($response-data, :$nph);
   }
   else 
   {
