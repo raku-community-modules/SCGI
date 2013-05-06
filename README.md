@@ -69,6 +69,18 @@ or one of the full blown frameworks built using it.
 
 ## Configuration
 
+### nginx
+
+Make sure you compiled nginx with the SCGI plugin (it is included by default.)
+Then, in one of your server blocks, add a location mount:
+
+```nginx
+  location /scgi {
+    scgi_pass 127.0.0.1:8118;
+    include scgi_params;
+  }
+```
+
 ### lighttpd
 
 First, make sure the SCGI library is being loaded.
