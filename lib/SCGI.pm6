@@ -46,11 +46,18 @@ method accept ()
 method handle (&closure) 
 {
   if ($.debug) {
-    $*ERR.say: "socket family is "~$.socket.family;
-    $*ERR.say: "socket proto is "~$.socket.proto;
-    $*ERR.say: "socket type is "~$.socket.type;
+    if $!socket
+    {
+      $*ERR.say: "socket family is "~$.socket.family;
+      $*ERR.say: "socket proto is "~$.socket.proto;
+      $*ERR.say: "socket type is "~$.socket.type;
+    }
+    else
+    {
+      $*ERR.say: "No socket yet";
+    }
   }
-  $*ERR.say: "[{time}] SCGI is ready and waiting.";
+  $*ERR.say: "[{time}] SCGI is ready and waiting ($!addr:$!port)";
   while (my $connection = self.accept) 
   {
     if ($.debug) { $*ERR.say: "Doing the loop"; }
