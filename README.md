@@ -75,9 +75,13 @@ Make sure you compiled nginx with the SCGI plugin (it is included by default.)
 Then, in one of your server blocks, add a location mount:
 
 ```nginx
-  location /scgi {
+  location /scgi/ {
     scgi_pass 127.0.0.1:8118;
     include scgi_params;
+    # Optionally rewrite document URI path
+    rewrite ^/scgi/(.*) /$1 break;
+    # Some applications may need rewritten URI in PATH_INFO
+    scgi_param PATH_INFO $uri;
   }
 ```
 
