@@ -1,13 +1,13 @@
-# SCGI for Perl 6
+# SCGI for Raku
 
 ## Introduction
 
-This is a simple SCGI library for Perl 6.
+This is a simple SCGI library for Raku.
 
-It's main influences are the Perl 5 SCGI library, and the
-Perl 6 HTTP::Daemon library.
+It's main influences are the Perl SCGI library, and the
+Raku HTTP::Daemon library.
 
-It offers a bit of candy coating compared to the Perl 5 version.
+It offers a bit of candy coating compared to the Perl version.
 
 By default is uses a PSGI-compliant interface, but can also handle
 raw HTTP responses.
@@ -21,7 +21,7 @@ create the object for you.
 The simplest (and recommended) form of usage is to use the handle() method
 with PSGI-compliant output. Here's an example:
 
-```perl
+```raku
   use SCGI;
 
   my $scgi = SCGI.new( :port(8118) );
@@ -42,7 +42,7 @@ with PSGI-compliant output. Here's an example:
 There are other ways of using SCGI, such as writing your own run loop,
 or using a raw HTTP output instead of PSGI. Here's an example doing both:
 
-```perl
+```raku
   use SCGI;
 
   my $scgi = SCGI.new( :port(8118), :!PSGI, :!P6SGI );
@@ -64,7 +64,7 @@ or using a raw HTTP output instead of PSGI. Here's an example doing both:
 Test script representing both examples can be found in the 'test' folder.
 
 If you are serious about using SCGI for web application development, see
-the [Perl 6 Web](https://github.com/supernovus/perl6-web/) library set, 
+the [Web](https://github.com/raku-community-modules/Web/) library set, 
 or one of the full blown frameworks built using it.
 
 ## Configuration
@@ -130,12 +130,12 @@ SCGI script configuration:
 
 ## Requirements
 
- * [HTTP::Status](https://github.com/supernovus/perl6-http-status)
- * [Netstring](https://github.com/supernovus/perl6-netstring)
+ * [HTTP::Status](https://github.com/raku-community-modules/HTTP-Status)
+ * [Netstring](https://github.com/raku-community-modules/Netstring)
 
 ## Author 
 
-Timothy Totten, supernovus on #perl6, https://github.com/supernovus/
+Timothy Totten, supernovus on #raku, https://github.com/supernovus/
 
 ## License
 
