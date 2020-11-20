@@ -3,7 +3,7 @@
   "name"        : "SCGI",
   "license"     : "Artistic-2.0",
   "version"     : "2.4",
-  "description" : "A SCGI library for Perl 6",
+  "description" : "A SCGI library for Raku",
   "depends"     : [ "HTTP::Status", "Netstring", "PSGI" ],
   "provides"    : {
     "SCGI"             : "lib/SCGI.pm6",
@@ -13,5 +13,5 @@
     "SCGI::Request"    : "lib/SCGI/Request.pm6",
     "SCGI::Response"   : "lib/SCGI/Response.pm6"
   },
-  "source-url"  : "git://github.com/supernovus/SCGI.git"
+  "source-url"  : "git://github.com/raku-community-modules/SCGI.git"
 }
