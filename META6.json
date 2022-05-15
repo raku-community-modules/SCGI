@@ -1,4 +1,5 @@
 {
+  "auth": "zef:raku-community-modules",
   "build-depends": [
   ],
   "depends": [
@@ -21,7 +22,8 @@
   "resources": [
   ],
   "source-url": "git://github.com/raku-community-modules/SCGI.git",
-  "tags": [ "SCGI"
+  "tags": [
+    "SCGI"
   ],
   "test-depends": [
   ],
