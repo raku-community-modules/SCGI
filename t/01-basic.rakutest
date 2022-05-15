@@ -1,0 +1,8 @@
+use Test;
+use SCGI;
+
+plan 1;
+
+use-ok("SCGI");
+
+# vim: expandtab shiftwidth=4

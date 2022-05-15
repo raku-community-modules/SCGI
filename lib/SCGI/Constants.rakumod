@@ -1,5 +1,3 @@
-use v6;
-
 unit module SCGI::Constants;
 
 constant CRLF is export = "\x0D\x0A";
@@ -24,3 +22,4 @@ constant SCGI_M_QUIT is export =
 constant SCGI_ERROR_CODE is export =
   "Status: 500 SCGI Protocol Error";
 
+# vim: expandtab shiftwidth=4
