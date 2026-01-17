@@ -1,6 +1,6 @@
-use HTTP::Status;
+use HTTP::Status:ver<0.0.5+>:auth<zef:lizmat>;
 use SCGI::Constants;
-use PSGI;
+use PSGI:ver<1.2.2+>:auth<zef:raku-community-modules>;
 
 unit class SCGI::Response;
 

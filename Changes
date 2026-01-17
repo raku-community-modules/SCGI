@@ -1,6 +1,10 @@
 Revision history for SCGI
 
 {{$NEXT}}
+    - Tightened dependencies
+    - Modernize doc and META6
+    - Add preliminary coverage testing
+    - Update copyright year
 
 2.5  2022-05-15T21:55:43+02:00
     - First version in the zef ecosystem

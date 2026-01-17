@@ -1,11 +1,15 @@
 {
   "auth": "zef:raku-community-modules",
+  "authors": [
+    "Timothy Totten, supernovus",
+    "Raku community"
+  ],
   "build-depends": [
   ],
   "depends": [
-    "HTTP::Status",
-    "Netstring",
-    "PSGI"
+    "HTTP::Status:ver<0.0.5+>:auth<zef:lizmat>",
+    "Netstring:ver<0.0.4+>:auth<zef:raku-community-modules>",
+    "PSGI:ver<1.2.2+>:auth<zef:raku-community-modules>"
   ],
   "description": "A SCGI library for Raku",
   "license": "Artistic-2.0",
@@ -21,11 +25,11 @@
   },
   "resources": [
   ],
-  "source-url": "git://github.com/raku-community-modules/SCGI.git",
+  "source-url": "https://github.com/raku-community-modules/SCGI.git",
   "tags": [
     "SCGI"
   ],
   "test-depends": [
   ],
-  "version": "2.5"
+  "version": "2.6"
 }

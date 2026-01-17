@@ -1,6 +1,6 @@
-use Netstring;
+use Netstring:ver<0.0.4+>:auth<zef:raku-community-modules>;
 use SCGI::Constants;
-use PSGI;
+use PSGI:ver<1.2.2+>:auth<zef:raku-community-modules>;
 
 unit class SCGI::Request;
 
